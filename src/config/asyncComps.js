@@ -12,6 +12,7 @@ const AddOrUpdateRole = () => lazy(() => import("@/pages/Acl/Role/components/Add
 const Course = () => lazy(() => import("@/pages/Edu/Course"));
 const Settings = () => lazy(() => import("@/pages/User/Settings"));
 const Center = () => lazy(() => import("@/pages/User/Center"));
+const Subject = () => lazy(() => import("@/pages/Edu/Subject"));
 
 export default {
   Admin,
@@ -24,5 +25,6 @@ export default {
   AddOrUpdateRole,
   Course,
   Settings,
-	Center,
+  Center,
+  Subject
 };
