@@ -24,7 +24,7 @@ export default class Subject extends Component {
 		expandedRowKeys: [], //展开了的一级分类id数组
 		loading: false, //是否处于加载中
 		editSubjectId: '', //当前编辑的分类
-		editSubjectTitle: '' //当前编辑分类titie
+		editSubjectTitle: '', //当前编辑分类titie
 	}
 
 	//根据：页码、页大小请求对应数据
@@ -93,6 +93,10 @@ export default class Subject extends Component {
 		this.getNo1SubjectPagination(1)
 		this.setState({ editSubjectId: '', editSubjectTitle: '' })
 	}
+	//编辑状态下,取消按钮的回调
+	updateSubjectOut = ()=>{
+		this.setState({ editSubjectId: '', editSubjectTitle: '' })
+	}
 
 	componentDidMount() {
 		//初始化第一页数据
@@ -134,7 +138,7 @@ export default class Subject extends Component {
 					subject._id === editSubjectId ?
 						<div className='edit_btn_group'>
 							<Button size='small' className="ok_btn" type='primary' onClick={this.updateSubject}>确定</Button>
-							<Button size='small'>取消</Button>
+							<Button size='small' onClick={this.updateSubjectOut}>取消</Button>
 						</div> :
 						<>
 							<Tooltip>
@@ -177,7 +181,7 @@ export default class Subject extends Component {
 						showQuickJumper: true,
 						pageSizeOptions: ['3', '5', '8', '10'],
 						onChange: this.getNo1SubjectPagination,
-						onShowSizeChange: (_, pageSize) => { this.getNo1SubjectPagination(1, pageSize) }
+						onShowSizeChange: (_, pageSize) => { this.getNo1SubjectPagination (pageSize) }
 					}}
 				/>
 			</Card>
