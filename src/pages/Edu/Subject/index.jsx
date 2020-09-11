@@ -143,7 +143,6 @@ export default class Subject extends Component {
 							<Tooltip>
 								<Button type="danger" icon={<DeleteOutlined />}></Button>
 							</Tooltip>
-							console.log(object)
 						</>
 				)
 			},
