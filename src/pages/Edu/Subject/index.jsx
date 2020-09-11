@@ -1,10 +1,14 @@
 import React, { Component } from 'react'
 //引入antd的Card、Button组件
-import { Card, Button, Table } from 'antd'
+import { Card, Button, Table,Tooltip,Input } from 'antd'
 //引入图标
 import { PlusCircleOutlined, FormOutlined, DeleteOutlined } from '@ant-design/icons'
 //引入reqNo1SubjectPagination发送请求
-import { reqNo1SubjectPagination,reqAllNo2SubjectByNo1Id } from '@/api/edu/subject'
+import { 
+	reqNo1SubjectPagination,
+	reqAllNo2SubjectByNo1Id,
+	reqUpdateSubject 
+} from '@/api/edu/subject'
 //引入样式
 import './index.less'
 
@@ -18,6 +22,9 @@ export default class Subject extends Component {
 		},
 		pageSize: 3, //页大小
 		expandedRowKeys: [], //展开了的一级分类id数组
+		loading: false, //是否处于加载中
+		editSubjectId:'', //当前编辑的分类
+		editSubjectTitle: '' //当前编辑分类titie
 	}
 
 	//根据：页码、页大小请求对应数据
@@ -29,7 +36,8 @@ export default class Subject extends Component {
 		this.setState({
 			no1SubjectInfo: { items, total },
 			pageSize,
-			expandedRowKeys:[]
+			expandedRowKeys:[], //清空之前展开过的分类
+			loading: false 
 		})
 	}
 	//点击展开按钮的回调
@@ -42,7 +50,7 @@ export default class Subject extends Component {
 			//获取当前展开项
 			const currentSubject = no1SubjectInfo.items.find(sub => sub._id === currentId)
 			//获得当前展开项的id
-			if (!currentSubject.children.length) {
+			if (currentSubject.children && !currentSubject.children.length) {
 				//请求数据
 				const result = await reqAllNo2SubjectByNo1Id(currentId)
 				//获取二级分类数组
@@ -66,6 +74,26 @@ export default class Subject extends Component {
 		this.setState({ expandedRowKeys: expandedIds })
 	}
 
+	//点击编辑按钮的回调
+	handleEdit = ({_id,title}) => {
+		return ()=>{
+			this.setState({editSubjectId:_id,editSubjectTitle:title})
+		}
+	}
+
+	//用户更改title的回调
+	handleTitleChange = (event)=>{
+	  this.setState({editSubjectTitle:event.target.value})
+	}
+
+	//编辑状态下,确认按钮的回调
+	updateSubject = async ()=>{
+	 const {editSubjectId,editSubjectTitle} = this.state 
+	 const result = await reqUpdateSubject(editSubjectId,editSubjectTitle)
+	 this.getNo1SubjectPagination(1)
+	 this.setState({editSubjectId:'',editSubjectTitle:''})
+	}
+
 	componentDidMount() {
 		//初始化第一页数据
 		this.getNo1SubjectPagination(1)
@@ -73,24 +101,48 @@ export default class Subject extends Component {
 
 	render() {
 		//从状态中获取所有一级分类数据
-		const { no1SubjectInfo: { total, items }, pageSize } = this.state
+		const { 
+			no1SubjectInfo: { total, items }, 
+			pageSize,
+			expandedRowKeys,
+			loading,
+			editSubjectId
+		} = this.state
 		//columns是表格的列配置（重要）
 		const columns = [
 			{
 				title: '分类名', //列名
-				dataIndex: 'title', //数据索引项
+				// dataIndex: 'title', //数据索引项
 				key: '0',
-				width: '80%'
+				width: '80%',
+				render:(subject)=>{
+					subject._id === editSubjectId ?
+					<Input
+						onChange={this.handleTitleChange}
+						className='edit_input'
+						type='text'
+						defaultValue={subject.title}
+					/> : subject.title
+				}
 			},
 			{
 				title: '操作',
-				dataIndex: 'name',
+				// dataIndex: 'name',
 				key: '1',
 				align: 'center',
-				render: () => (
+				render: (subject) => (
+					subject._id === editSubjectId ?
+					<div className='edit_btn_group'>
+						<Button size='small' className="ok_btn" type='primary' onClick={this.updateSubject}>确定</Button>
+						<Button size='small'>取消</Button>
+					</div> :
 					<>
-						<Button className="left_btn" type="primary" icon={<FormOutlined />}></Button>
+						<Tooltip>
+						<Button onClick={this.handleEdit(subject)} className="left_btn" type="primary" icon={<FormOutlined />}></Button>
+						</Tooltip>
+						<Tooltip>
 						<Button type="danger" icon={<DeleteOutlined />}></Button>
+						</Tooltip>
 					</>
 				)
 			},
@@ -111,11 +163,12 @@ export default class Subject extends Component {
 					dataSource={items}
 					columns={columns}
 					rowKey="_id"
+					loading={loading}
 					expandable={{
 						// expandedRowRender: record => <p style={{ margin: 0 }}>{record.description}</p>,
 						// rowExpandable: record => record.name !== 'Not Expandable',
 						onExpandedRowsChange:this.handleExpand,//展开的回调 --- 传入：处于展开状态的id数组
-						expandedRowKeys //告诉Table展开了哪些项
+						expandedRowKeys, //告诉Table展开了哪些项
 					}}
 					pagination={{
 						pageSize,
