@@ -1,6 +1,6 @@
 import React, { Component } from 'react'
 //引入antd的Card、Button组件
-import { Card, Button, Table, Tooltip, Input } from 'antd'
+import { Card, Button, Table, Tooltip, Input, message, Modal } from 'antd'
 //引入图标
 import { PlusCircleOutlined, FormOutlined, DeleteOutlined } from '@ant-design/icons'
 //引入reqNo1SubjectPagination发送请求
@@ -11,6 +11,7 @@ import {
 } from '@/api/edu/subject'
 //引入样式
 import './index.less'
+const { confirm } = Modal;
 
 
 export default class Subject extends Component {
@@ -21,6 +22,7 @@ export default class Subject extends Component {
 			total: 0 //数据总数
 		},
 		pageSize: 3, //页大小
+		current: 1, //当前页码
 		expandedRowKeys: [], //展开了的一级分类id数组
 		loading: false, //是否处于加载中
 		editSubjectId: '', //当前编辑的分类
@@ -36,6 +38,7 @@ export default class Subject extends Component {
 		this.setState({
 			no1SubjectInfo: { items, total },
 			pageSize,
+			current: page,
 			expandedRowKeys: [], //清空之前展开过的分类
 			loading: false
 		})
@@ -86,12 +89,32 @@ export default class Subject extends Component {
 		this.setState({ editSubjectTitle: event.target.value })
 	}
 
+	//用户更新本地分类信息的回调
+	processSubject = (arr)=>{
+		const { editSubjectId, editSubjectTitle } = this.state
+		return arr.map((sub)=>{
+		  if (sub._id === editSubjectId) {
+				sub.title = editSubjectTitle
+			} else {
+				if(sub.children) this.processSubject(sub.children)
+			}
+			return sub
+		})
+	}
+
+
 	//编辑状态下,确认按钮的回调
 	updateSubject = async () => {
-		const { editSubjectId, editSubjectTitle } = this.state
-		const result = await reqUpdateSubject(editSubjectId, editSubjectTitle)
-		this.getNo1SubjectPagination(1)
-		this.setState({ editSubjectId: '', editSubjectTitle: '' })
+		const { editSubjectId, editSubjectTitle,no1SubjectInfo } = this.state
+		await reqUpdateSubject(editSubjectId, editSubjectTitle)
+		message.success('更新成功了!')
+		// this.getNo1SubjectPagination(current)
+		const arr = this.demo(no1SubjectInfo.items)
+		this.setState({ 
+			editSubjectId: '', 
+			editSubjectTitle: '' ,
+			no1SubjectInfo:{...no1SubjectInfo,items:arr}
+		})
 	}
 	//编辑状态下,取消按钮的回调
 	updateSubjectOut = ()=>{
@@ -110,7 +133,8 @@ export default class Subject extends Component {
 			pageSize,
 			expandedRowKeys,
 			loading,
-			editSubjectId
+			editSubjectId,
+			current
 		} = this.state
 		//columns是表格的列配置（重要）
 		const columns = [
@@ -177,6 +201,7 @@ export default class Subject extends Component {
 					pagination={{
 						pageSize,
 						total,
+						current, //更新页码
 						showSizeChanger: true,
 						showQuickJumper: true,
 						pageSizeOptions: ['3', '5', '8', '10'],
