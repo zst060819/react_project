@@ -1,6 +1,8 @@
 import React, { Component } from 'react'
-import {Upload,message,button, Button} from 'antd'
+import {Upload,message,Button} from 'antd'
 import {UploadOutlined} from '@ant-design/icons'
+import {reqQiniuToken} from '@/api/upload'
+import * as qiniu from 'qiniu-js'
 
 const MY_VIDEO_SIZE =1024*1024*8
 export default class MyUpload extends Component {
@@ -16,8 +18,14 @@ export default class MyUpload extends Component {
     })
   }
 	//用于编写自定义上传的逻辑
-  customRequest = ()=>{
-    	//此处要写一些代码，将视频交给七牛云
+  customRequest = async({file,onError,onProgress,onSuccess})=>{
+    //此处要写一些代码，将视频交给七牛云
+    const key = 'zhangshutao'+file.uid
+    const {uploadToken:token} = await reqQiniuToken()
+    const putExtra = {}
+    const config = {}
+    const observable = qiniu.upload(file, key, token, putExtra, config)
+    observable.subscribe() // 上传开始
   }
   render() {
     return (
