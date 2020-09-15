@@ -19,13 +19,29 @@ export default class MyUpload extends Component {
   }
 	//用于编写自定义上传的逻辑
   customRequest = async({file,onError,onProgress,onSuccess})=>{
+    //创建一个上传的检测者
+    const observer = {
+      next({total}) {
+        onProgress({percent:total.percent})
+      },
+      error(err){
+        onError()
+        // console.log('服务器记载了本次错误',err.message);
+        message.error('上传失败,请联系管理员')
+      },
+      complete :(res)=>{
+				//如果七牛最终上传成功，则调用complete
+				onSuccess()
+				console.log('视频地址为：','http://qgoex93ob.hn-bkt.clouddn.com/'+res.key);
+				this.props.onChange('http://qgoex93ob.hn-bkt.clouddn.com/'+res.key)
+				message.success('上传成功！')
+			}
+    }
     //此处要写一些代码，将视频交给七牛云
     const key = 'zhangshutao'+file.uid
     const {uploadToken:token} = await reqQiniuToken()
-    const putExtra = {}
-    const config = {}
-    const observable = qiniu.upload(file, key, token, putExtra, config)
-    observable.subscribe() // 上传开始
+    const observable = qiniu.upload(file, key, token)
+    observable.subscribe(observer) // 上传开始
   }
   render() {
     return (
